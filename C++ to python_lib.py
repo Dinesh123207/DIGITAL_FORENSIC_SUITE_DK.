@@ -1,52 +1,41 @@
+import os
 import datetime
 
-class Date:
-    def __init__(self):
-        self.d = 0
-        self.m = 0
-        self.y = 0
 
-def timer():
-    now = datetime.datetime.now()
-    print(now.strftime("%d/%m/%Y %H:%M:%S"))
+class Date:
+    def __init__(self, d, m, y):
+        self.d = d
+        self.m = m
+        self.y = y
+
 
 def get_date():
-    date = Date()
-    try:
-        date.d = int(input("Enter day: "))
-        date.m = int(input("Enter month: "))
-        date.y = int(input("Enter year: "))
-    except ValueError:
-        print("Invalid date format.")
-        return get_date()
-    
-    if not correct_date(date.d, date.m, date.y):
-        print("Invalid date.")
-        return get_date()
-    
-    return date
+    while True:
+        try:
+            d = int(input("Enter day: "))
+            m = int(input("Enter month: "))
+            y = int(input("Enter year: "))
+            datetime.datetime(y, m, d)  # Check if the date is valid
+            return Date(d, m, y)
+        except ValueError:
+            print("Invalid date. Please try again.")
 
-def correct_date(d, m, y):
-    try:
-        datetime.datetime(y, m, d)
-        return True
-    except ValueError:
-        return False
 
 def day_in_month(m, y):
-    if m == 2:
+    if m in [1, 3, 5, 7, 8, 10, 12]:
+        return 31
+    elif m in [4, 6, 9, 11]:
+        return 30
+    elif m == 2:
         if y % 4 == 0 and (y % 100 != 0 or y % 400 == 0):
             return 29
         else:
             return 28
-    elif m in [4, 6, 9, 11]:
-        return 30
-    else:
-        return 31
+
 
 class Book:
     def __init__(self):
-        self.bno = 0
+        self.bno = None
         self.bname = ""
         self.bauthor = ""
         self.bprice = 0.0
@@ -57,216 +46,391 @@ class Book:
         while True:
             try:
                 self.bno = int(input("Enter book number: "))
-                # Check if the book number already exists
-                # Implement the searchbook() function to check the existence of the book number
-                # if searchbook(self.bno) is True:
-                #     print("Book with this number already exists! Try another number.")
-                #     continue
-                break
+                # Search if book with this number already exists
+                if search_book(self.bno):
+                    print("Book with this number already exists! Please try another number.")
+                else:
+                    break
             except ValueError:
-                print("Invalid book number.")
-        
+                print("Invalid book number. Please try again.")
+
         self.bname = input("Enter book name: ")
         self.bauthor = input("Enter book author: ")
-        
         while True:
             try:
-                self.bprice = float(input("Enter book price: "))
+                self.bprice = float(input("Enter price: "))
                 break
             except ValueError:
-                print("Invalid price format.")
+                print("Invalid price. Please try again.")
 
     def show_data(self):
-        print("Book Number:", self.bno)
-        print("Book Name:", self.bname)
-        print("Book Author:", self.bauthor)
-        print("Book Price:", self.bprice)
+        print("\nBook Number: ", self.bno)
+        print("Book Name: ", self.bname)
+        print("Book Author: ", self.bauthor)
+        print("Book Price: ", self.bprice)
+
 
 class Member:
     def __init__(self):
-        self.mno = 0
+        self.mno = None
         self.mname = ""
         self.maddress = ""
         self.pno = 0
         self.ino = 0
-        self.dob = Date()
+        self.dob = None
 
     def set_data(self):
         while True:
             try:
                 self.mno = int(input("Enter member number: "))
-                # Check if the member number already exists
-                # Implement the searchmember() function to check the existence of the member number
-                # if searchmember(self.mno) is True:
-                #     print("Member with this number already exists! Try another number.")
-                #     continue
-                break
+                # Search if member with this number already exists
+                if search_member(self.mno):
+                    print("Member with this number already exists! Please try another number.")
+                else:
+                    break
             except ValueError:
-                print("Invalid member number.")
-        
+                print("Invalid member number. Please try again.")
+
         self.mname = input("Enter member name: ")
         self.maddress = input("Enter member address: ")
-        
         while True:
             try:
                 self.pno = int(input("Enter phone number: "))
                 break
             except ValueError:
-                print("Invalid phone number format.")
-        
+                print("Invalid phone number. Please try again.")
+
+        print("Enter date of birth:")
         self.dob = get_date()
 
     def show_data(self):
-        print("Member Number:", self.mno)
-        print("Member Name:", self.mname)
-        print("Member Address:", self.maddress)
-        print("Phone Number:", self.pno)
-        print("Date of Birth:", self.dob.d, self.dob.m, self.dob.y)
+        print("\nMember Number: ", self.mno)
+        print("Member Name: ", self.mname)
+        print("Member Address: ", self.maddress)
+        print("Phone Number: ", self.pno)
+        print("Number of Books: ", self.ino)
+        print("Date of Birth: ", self.dob.d, "/", self.dob.m, "/", self.dob.y)
 
-def add_book(books):
+
+def book_entry():
     book = Book()
     book.set_data()
-    books.append(book)
-    print("Book added successfully.")
 
-def delete_book(books, bno):
-    for book in books:
-        if book.bno == bno:
-            books.remove(book)
-            print("Book deleted successfully.")
-            return
-    print("Book not found.")
+    try:
+        with open("book.dat", "ab") as file:
+            file.write(str(book.bno).encode() + b"\n")
+            file.write(book.bname.encode() + b"\n")
+            file.write(book.bauthor.encode() + b"\n")
+            file.write(str(book.bprice).encode() + b"\n")
+            file.write(book.status.encode() + b"\n")
+            file.write(str(book.isno).encode() + b"\n")
+        print("\nBook record added successfully!")
+    except IOError:
+        print("Error occurred while adding book record.")
 
-def add_member(members):
+
+def book_delete():
+    bno = int(input("Enter book number to delete: "))
+
+    if not search_book(bno):
+        print("Book not found!")
+        return
+
+    try:
+        with open("book.dat", "rb") as file:
+            lines = file.readlines()
+        with open("book.dat", "wb") as file:
+            for i in range(0, len(lines), 6):
+                if int(lines[i].decode().strip()) != bno:
+                    file.write(lines[i])
+                    file.write(lines[i + 1])
+                    file.write(lines[i + 2])
+                    file.write(lines[i + 3])
+                    file.write(lines[i + 4])
+                    file.write(lines[i + 5])
+        print("Book record deleted successfully!")
+    except IOError:
+        print("Error occurred while deleting book record.")
+
+
+def book_list():
+    try:
+        with open("book.dat", "rb") as file:
+            lines = file.readlines()
+
+        if len(lines) == 0:
+            print("No books found!")
+        else:
+            print("\nBOOK LIST\n")
+            for i in range(0, len(lines), 6):
+                book = Book()
+                book.bno = int(lines[i].decode().strip())
+                book.bname = lines[i + 1].decode().strip()
+                book.bauthor = lines[i + 2].decode().strip()
+                book.bprice = float(lines[i + 3].decode().strip())
+                book.status = lines[i + 4].decode().strip()
+                book.isno = int(lines[i + 5].decode().strip())
+                book.show_data()
+                print("----------------------------------")
+    except IOError:
+        print("Error occurred while accessing book records.")
+
+
+def member_entry():
     member = Member()
     member.set_data()
-    members.append(member)
-    print("Member added successfully.")
 
-def delete_member(members, mno):
-    for member in members:
-        if member.mno == mno:
-            members.remove(member)
-            print("Member deleted successfully.")
-            return
-    print("Member not found.")
+    try:
+        with open("member.dat", "ab") as file:
+            file.write(str(member.mno).encode() + b"\n")
+            file.write(member.mname.encode() + b"\n")
+            file.write(member.maddress.encode() + b"\n")
+            file.write(str(member.pno).encode() + b"\n")
+            file.write(str(member.ino).encode() + b"\n")
+            file.write(str(member.dob.d).encode() + b"\n")
+            file.write(str(member.dob.m).encode() + b"\n")
+            file.write(str(member.dob.y).encode() + b"\n")
+        print("\nMember record added successfully!")
+    except IOError:
+        print("Error occurred while adding member record.")
 
-def display_books(books):
-    for book in books:
-        book.show_data()
-        print()
 
-def display_members(members):
-    for member in members:
-        member.show_data()
-        print()
+def member_delete():
+    mno = int(input("Enter member number to delete: "))
 
-def search_book(books, bno):
-    for book in books:
-        if book.bno == bno:
-            print("Book found:")
-            book.show_data()
-            return
-    print("Book not found.")
+    if not search_member(mno):
+        print("Member not found!")
+        return
 
-def search_member(members, mno):
-    for member in members:
-        if member.mno == mno:
-            print("Member found:")
-            member.show_data()
-            return
-    print("Member not found.")
+    try:
+        with open("member.dat", "rb") as file:
+            lines = file.readlines()
+        with open("member.dat", "wb") as file:
+            for i in range(0, len(lines), 8):
+                if int(lines[i].decode().strip()) != mno:
+                    file.write(lines[i])
+                    file.write(lines[i + 1])
+                    file.write(lines[i + 2])
+                    file.write(lines[i + 3])
+                    file.write(lines[i + 4])
+                    file.write(lines[i + 5])
+                    file.write(lines[i + 6])
+                    file.write(lines[i + 7])
+        print("Member record deleted successfully!")
+    except IOError:
+        print("Error occurred while deleting member record.")
 
-def issue_book(books, members, bno, mno):
-    book_found = False
-    member_found = False
-    
-    for book in books:
-        if book.bno == bno:
-            book_found = True
-            if book.status == "AVAILABLE":
-                for member in members:
-                    if member.mno == mno:
-                        member_found = True
-                        book.status = "ISSUED"
-                        book.isno += 1
-                        print("Book issued successfully.")
-                        return
-                print("Member not found.")
-                return
-            print("Book already issued.")
-            return
-    
-    if not book_found:
-        print("Book not found.")
 
-def return_book(books, bno):
-    for book in books:
-        if book.bno == bno:
-            if book.status == "ISSUED":
-                book.status = "AVAILABLE"
-                book.isno -= 1
-                print("Book returned successfully.")
-                return
-            print("Book is not issued.")
-            return
-    print("Book not found.")
+def member_list():
+    try:
+        with open("member.dat", "rb") as file:
+            lines = file.readlines()
+
+        if len(lines) == 0:
+            print("No members found!")
+        else:
+            print("\nMEMBER LIST\n")
+            for i in range(0, len(lines), 8):
+                member = Member()
+                member.mno = int(lines[i].decode().strip())
+                member.mname = lines[i + 1].decode().strip()
+                member.maddress = lines[i + 2].decode().strip()
+                member.pno = int(lines[i + 3].decode().strip())
+                member.ino = int(lines[i + 4].decode().strip())
+                member.dob = Date(
+                    int(lines[i + 5].decode().strip()),
+                    int(lines[i + 6].decode().strip()),
+                    int(lines[i + 7].decode().strip())
+                )
+                member.show_data()
+                print("----------------------------------")
+    except IOError:
+        print("Error occurred while accessing member records.")
+
+
+def issue_book():
+    mno = int(input("Enter member number: "))
+    if not search_member(mno):
+        print("Member not found!")
+        return
+
+    bno = int(input("Enter book number: "))
+    if not search_book(bno):
+        print("Book not found!")
+        return
+
+    try:
+        with open("member.dat", "rb") as file:
+            lines = file.readlines()
+        with open("member.dat", "wb") as file:
+            for i in range(0, len(lines), 8):
+                if int(lines[i].decode().strip()) == mno:
+                    member = Member()
+                    member.mno = int(lines[i].decode().strip())
+                    member.mname = lines[i + 1].decode().strip()
+                    member.maddress = lines[i + 2].decode().strip()
+                    member.pno = int(lines[i + 3].decode().strip())
+                    member.ino = int(lines[i + 4].decode().strip())
+                    member.dob = Date(
+                        int(lines[i + 5].decode().strip()),
+                        int(lines[i + 6].decode().strip()),
+                        int(lines[i + 7].decode().strip())
+                    )
+                    member.ino += 1
+                    file.write(str(member.mno).encode() + b"\n")
+                    file.write(member.mname.encode() + b"\n")
+                    file.write(member.maddress.encode() + b"\n")
+                    file.write(str(member.pno).encode() + b"\n")
+                    file.write(str(member.ino).encode() + b"\n")
+                    file.write(str(member.dob.d).encode() + b"\n")
+                    file.write(str(member.dob.m).encode() + b"\n")
+                    file.write(str(member.dob.y).encode() + b"\n")
+                else:
+                    file.write(lines[i])
+                    file.write(lines[i + 1])
+                    file.write(lines[i + 2])
+                    file.write(lines[i + 3])
+                    file.write(lines[i + 4])
+                    file.write(lines[i + 5])
+                    file.write(lines[i + 6])
+                    file.write(lines[i + 7])
+    except IOError:
+        print("Error occurred while updating member record.")
+
+    try:
+        with open("book.dat", "rb") as file:
+            lines = file.readlines()
+        with open("book.dat", "wb") as file:
+            for i in range(0, len(lines), 6):
+                if int(lines[i].decode().strip()) == bno:
+                    book = Book()
+                    book.bno = int(lines[i].decode().strip())
+                    book.bname = lines[i + 1].decode().strip()
+                    book.bauthor = lines[i + 2].decode().strip()
+                    book.bprice = float(lines[i + 3].decode().strip())
+                    book.status = "ISSUED"
+                    book.isno = mno
+                    file.write(str(book.bno).encode() + b"\n")
+                    file.write(book.bname.encode() + b"\n")
+                    file.write(book.bauthor.encode() + b"\n")
+                    file.write(str(book.bprice).encode() + b"\n")
+                    file.write(book.status.encode() + b"\n")
+                    file.write(str(book.isno).encode() + b"\n")
+                else:
+                    file.write(lines[i])
+                    file.write(lines[i + 1])
+                    file.write(lines[i + 2])
+                    file.write(lines[i + 3])
+                    file.write(lines[i + 4])
+                    file.write(lines[i + 5])
+    except IOError:
+        print("Error occurred while updating book record.")
+
+    print("Book issued successfully!")
+
+
+def return_book():
+    bno = int(input("Enter book number: "))
+    if not search_book(bno):
+        print("Book not found!")
+        return
+
+    try:
+        with open("book.dat", "rb") as file:
+            lines = file.readlines()
+        with open("book.dat", "wb") as file:
+            for i in range(0, len(lines), 6):
+                if int(lines[i].decode().strip()) == bno:
+                    book = Book()
+                    book.bno = int(lines[i].decode().strip())
+                    book.bname = lines[i + 1].decode().strip()
+                    book.bauthor = lines[i + 2].decode().strip()
+                    book.bprice = float(lines[i + 3].decode().strip())
+                    book.status = "AVAILABLE"
+                    book.isno = 0
+                    file.write(str(book.bno).encode() + b"\n")
+                    file.write(book.bname.encode() + b"\n")
+                    file.write(book.bauthor.encode() + b"\n")
+                    file.write(str(book.bprice).encode() + b"\n")
+                    file.write(book.status.encode() + b"\n")
+                    file.write(str(book.isno).encode() + b"\n")
+                else:
+                    file.write(lines[i])
+                    file.write(lines[i + 1])
+                    file.write(lines[i + 2])
+                    file.write(lines[i + 3])
+                    file.write(lines[i + 4])
+                    file.write(lines[i + 5])
+    except IOError:
+        print("Error occurred while updating book record.")
+
+    print("Book returned successfully!")
+
+
+def search_book(bno):
+    try:
+        with open("book.dat", "rb") as file:
+            lines = file.readlines()
+
+        for i in range(0, len(lines), 6):
+            if int(lines[i].decode().strip()) == bno:
+                return True
+
+        return False
+    except IOError:
+        return False
+
+
+def search_member(mno):
+    try:
+        with open("member.dat", "rb") as file:
+            lines = file.readlines()
+
+        for i in range(0, len(lines), 8):
+            if int(lines[i].decode().strip()) == mno:
+                return True
+
+        return False
+    except IOError:
+        return False
+
 
 def main():
-    books = []
-    members = []
-    
     while True:
-        print("\nLibrary Management System")
-        print("1. Add Book")
-        print("2. Delete Book")
-        print("3. Add Member")
-        print("4. Delete Member")
-        print("5. Display Books")
-        print("6. Display Members")
-        print("7. Search Book")
-        print("8. Search Member")
-        print("9. Issue Book")
-        print("10. Return Book")
-        print("11. Display Date and Time")
-        print("12. Exit")
-        
-        choice = input("Enter your choice (1-12): ")
-        
+        print("\nLIBRARY MANAGEMENT SYSTEM")
+        print("1. Add book")
+        print("2. Delete book")
+        print("3. List all books")
+        print("4. Add member")
+        print("5. Delete member")
+        print("6. List all members")
+        print("7. Issue book")
+        print("8. Return book")
+        print("0. Exit")
+
+        choice = input("Enter your choice: ")
+
         if choice == "1":
-            add_book(books)
+            book_entry()
         elif choice == "2":
-            bno = int(input("Enter book number to delete: "))
-            delete_book(books, bno)
+            book_delete()
         elif choice == "3":
-            add_member(members)
+            book_list()
         elif choice == "4":
-            mno = int(input("Enter member number to delete: "))
-            delete_member(members, mno)
+            member_entry()
         elif choice == "5":
-            display_books(books)
+            member_delete()
         elif choice == "6":
-            display_members(members)
+            member_list()
         elif choice == "7":
-            bno = int(input("Enter book number to search: "))
-            search_book(books, bno)
+            issue_book()
         elif choice == "8":
-            mno = int(input("Enter member number to search: "))
-            search_member(members, mno)
-        elif choice == "9":
-            bno = int(input("Enter book number to issue: "))
-            mno = int(input("Enter member number: "))
-            issue_book(books, members, bno, mno)
-        elif choice == "10":
-            bno = int(input("Enter book number to return: "))
-            return_book(books, bno)
-        elif choice == "11":
-            timer()
-        elif choice == "12":
-            print("Exiting the program...")
+            return_book()
+        elif choice == "0":
             break
         else:
             print("Invalid choice. Please try again.")
+
 
 if __name__ == "__main__":
     main()
