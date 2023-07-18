@@ -1,9 +1,9 @@
-#Author:@Prime (Chandranshu singh)
-#Date : 17-07-2023
-#This code is able to extract the PIDs list of all the process running in the system.
-#The code will be create the file names as pid_list.txt that will contain all the processes list.
-#The code will be able to create all the dmp files in the same directory including specific process name.
-#The directory can be changed to the desired directory in the variable "dump_file_path" at line 61.
+# Author: @Prime (Chandranshu Singh)
+# Date: 17-07-2023
+# This code is able to extract the PIDs list of all the processes running in the system.
+# The code will create a file named pid_list.txt that will contain the list of all processes.
+# The code is also able to create .dmp files for each process in the specified directory.
+# The directory can be changed to the desired directory in the "dump_file_path" variable at line 61.
 
 import psutil
 import ctypes
@@ -59,28 +59,28 @@ def acquire_memory_dump(pid, dump_file_path, key):
     finally:
         if process_handle:
             ctypes.windll.kernel32.CloseHandle(process_handle)
-            
+
         if dump_file_handle:
             ctypes.windll.kernel32.CloseHandle(dump_file_handle)
 
 def encrypt_file(file_path, key):
     # Generate a random initialization vector (IV)
     iv = os.urandom(16)
-    
+
     # Create an AES cipher object with the provided key and IV
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-    
+
     with open(file_path, 'rb') as file:
         plaintext = file.read()
-        
+
     # Pad the plaintext to match the required block size
     padder = padding.PKCS7(128).padder()
     padded_plaintext = padder.update(plaintext) + padder.finalize()
-    
+
     # Encrypt the padded plaintext
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(padded_plaintext) + encryptor.finalize()
-    
+
     with open(file_path, 'wb') as file:
         file.write(iv)
         file.write(ciphertext)
@@ -107,7 +107,7 @@ def run():
             file.write(f"PID: {pid}\tName: {name}\n")
 
     # Use the list of processes with their PIDs for memory dump creation
-    key = b'this_is_my_encryption_key_32_chars_long'  # Specify your encryption key
+    key = os.urandom(32)  # Generate a random 32-byte (256-bit) encryption key
     for pid, _ in processes:
         dump_file_path = os.path.join(dump_directory, f"dump_file_{pid}.dmp")
         print(f"Extracting memory for PID {pid}...")
